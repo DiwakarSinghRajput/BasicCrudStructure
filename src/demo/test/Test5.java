@@ -12,6 +12,11 @@ import java.util.Map;
 public class Test5 {
 
 	static String mainFolderPath = "C:/test-wokspace/demo";
+	static String classPath = "demo.models.";
+	static String filePath = "src/demo/models";
+	static List<Field> newFieldList = new ArrayList<>();
+	static List<String> listOfModelClasses = new ArrayList<>();
+	static Map<String, List<Field>> modelNameWithItsVariableNames = new HashMap<>();
 
 	public static void main(String[] args) {
 
@@ -31,11 +36,11 @@ public class Test5 {
 
 				String className = javaFileName.split("\\.")[0];
 
+				listOfModelClasses.add(className);
+
 				try {
 
 					Class c = Class.forName(classPath + className);
-
-					System.out.println("Class: " + c);
 
 					List<Field> privateFieldsName = new ArrayList<>();
 					Field[] allFields = c.getDeclaredFields();
@@ -44,6 +49,10 @@ public class Test5 {
 							privateFieldsName.add(field);
 						}
 					}
+
+					// setting of the value for model and its fields
+					modelNameWithItsVariableNames.put(className, privateFieldsName);
+
 					Boolean flag = Test5.createDTOs(filePath, className, privateFieldsName, classPath);
 
 				} catch (ClassNotFoundException e) {
@@ -53,6 +62,134 @@ public class Test5 {
 				}
 			}
 		}
+
+		Boolean flag1 = Test5.createModeSetterExtension();
+
+	}
+
+	private static boolean createModeSetterExtension() {
+
+		try {
+			String dtoFolderPath = Test5.createNewFolders(mainFolderPath, filePath, "ModelAndDTOSetterExtension");
+
+			File f = new File(dtoFolderPath + "/ModelSetterExtension.java");
+
+			PrintWriter printWriter = new PrintWriter(f);
+
+			printWriter.println("package " + Test5.classPath.split("\\.")[0] + ".ModelAndDTOSetterExtension;");
+			printWriter.println();
+			createModeSetterExtensionImports(listOfModelClasses, printWriter);
+			printWriter.println();
+			printWriter.println("class ModelAndDTOSetterExtension {");
+			printWriter.println();
+
+			printWriter.println(" // HelperExtension helperExtension = new HelperExtension()");
+
+			createModeSetterExtensionMethods(modelNameWithItsVariableNames, printWriter);
+
+			printWriter.println("}");
+
+			printWriter.close();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+
+	private static void createModeSetterExtensionImports(List<String> listOfModelsName, PrintWriter printWriter) {
+//		import com.onlinetest.dto.AddressDetailsDTO;
+
+//		classPath
+
+		for (String a : listOfModelsName) {
+
+			printWriter.println("import " + classPath + a + ";");
+
+			printWriter.println("import " + classPath.split("\\.")[0] + ".DTO." + a + "DTO;");
+
+		}
+
+	}
+
+	private static void createModeSetterExtensionMethods(Map<String, List<Field>> modelNameWithItsVariableNames,
+			PrintWriter printWriter) {
+
+		for (Map.Entry<String, List<Field>> iterable_element : modelNameWithItsVariableNames.entrySet()) {
+
+			String model = iterable_element.getKey(); // For model name
+			List<Field> fieldList = iterable_element.getValue(); // For model fields List
+			String mainValue = model.substring(0, 1).toLowerCase() + model.substring(1);
+
+			printWriter.println("\t public " + model + " get" + model + "(" + model + "DTO dto , " + model + " "
+					+ mainValue + "Model) {");
+
+			for (Field field : fieldList) {
+
+				printWriter.println("\t\t" + model + " model = null;");
+				printWriter.println("\t\t if (!helperExtension.isNullOrEmpty(dto)) {");
+
+				printWriter.println("\t\t\t if (helperExtension.isNullOrEmpty(" + mainValue + ")) {");
+
+				printWriter.println("\t\t\t model = new " + model + "();");
+				printWriter.println("\t\t} else {");
+				printWriter.println("\t\t\t model = " + mainValue + "Model;");
+				printWriter.println("\t\t }");
+
+				if (field.getName().toLowerCase().contains("Id".toLowerCase())) {
+
+					String id = field.getName().substring(0, 1).toUpperCase() + field.getName().substring(1);
+					printWriter.println("\t\t\t if (!helperExtension.isNullOrEmpty(dto.get" + id + "())) {");
+					printWriter.println("\t\t\t model.set" + id + "(dto.get" + id + "());");
+
+					printWriter.println("\t\t} else {");
+
+					printWriter.println("\t\t model.set" + id + "(ID_ + helperExtension.getUniqueId());");
+					printWriter.println("\t\t}");
+//					if (!helperExtension.isNullOrEmpty(dto.getAddressId())) {
+//					model.setAddressId(dto.getAddressId());
+//				} else {
+//					model.setAddressId("ADD_ID_" + helperExtension.getUniqueId());
+//				}
+
+				}
+
+				printWriter.println("\t\t}");
+				printWriter.println("\t\t return model;");
+
+			}
+			printWriter.println("\t}");
+
+		}
+
+//		public AddressDetails getAddressDetails(AddressDetailsDTO dto, AddressDetails addressDetailsModel) {
+//		AddressDetails model = null;
+//		if (!helperExtension.isNullOrEmpty(dto)) {
+//			if (helperExtension.isNullOrEmpty(addressDetailsModel)) {
+//				model = new AddressDetails();
+//			} else {
+//				model = addressDetailsModel;
+//			}
+//			if (!helperExtension.isNullOrEmpty(dto.getAddressId())) {
+//				model.setAddressId(dto.getAddressId());
+//			} else {
+//				model.setAddressId("ADD_ID_" + helperExtension.getUniqueId());
+//			}
+//			model.setAddLine1(dto.getAddLine1());
+//			model.setAddLine2(dto.getAddLine2());
+//			model.setCity(dto.getCity());
+//			model.setState(dto.getState());
+//			model.setPincode(dto.getPincode());
+//			if (helperExtension.isNullOrEmpty(dto.getAddressId())) {
+//				model.setCreatedOn(helperExtension.timestampToDate(dto.getCreatedOn()));
+//			} else {
+//				model.setCreatedOn(helperExtension.timestampToDate(dto.getCreatedOn()));
+//				model.setUpdatedOn(helperExtension.getDateTime());
+//			}
+//			model.setIsFlag(1);
+//		}
+//		return model;
+//	}
 
 	}
 
@@ -86,8 +223,6 @@ public class Test5 {
 
 			List<String> dtoVariablesList = dtoHelper(asd);
 
-			List<Field> newFieldList = new ArrayList<>();
-
 			for (Field variable : privateFieldName) {
 				for (String qwe : dtoVariablesList) {
 					if (variable.getName().equalsIgnoreCase(qwe)) {
@@ -100,7 +235,7 @@ public class Test5 {
 
 			printWriter.println("package " + classpath.split("\\.")[0] + ".DTO;");
 			printWriter.println();
-			printWriter.println("class " + dtoFileName + "DTO {");
+			printWriter.println("public class " + dtoFileName + "DTO {");
 			printWriter.println();
 
 			// Start: import Statements
@@ -109,12 +244,11 @@ public class Test5 {
 
 			for (Field poi : newFieldList) {
 				String nameOFVariable = "";
-//				System.out.println( + "=" + poi.getName());
+
 				String asdqwe = poi.getType().getName();
 				String jh[] = asdqwe.split("\\.");
 				int index = jh.length;
 				String asdfg = jh[index - 1];
-				System.out.println(asdfg);
 				String convertedDataType = convertDataType(asdfg);
 				if (list.contains(convertedDataType)) {
 					nameOFVariable = poi.getName();
@@ -163,10 +297,6 @@ public class Test5 {
 			printWriter.println("\t}");
 			printWriter.println();
 		}
-
-//		public void setUserId(String userId) {
-//			this.userId = userId;
-//		}
 
 	}
 
