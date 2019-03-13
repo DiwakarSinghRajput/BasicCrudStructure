@@ -5,7 +5,9 @@ import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Test5 {
 
@@ -57,6 +59,8 @@ public class Test5 {
 	public static boolean createDTOs(String filePath, String dtoFileName, List<Field> privateFieldName,
 			String classpath) {
 
+		Map<String, String> hash_map = new HashMap<>();
+
 		List<String> list = new ArrayList<>();
 		list.add("String");
 		list.add("int");
@@ -96,7 +100,7 @@ public class Test5 {
 
 			printWriter.println("package " + classpath.split("\\.")[0] + ".DTO;");
 			printWriter.println();
-			printWriter.println("class " + dtoFileName + " {");
+			printWriter.println("class " + dtoFileName + "DTO {");
 			printWriter.println();
 
 			// Start: import Statements
@@ -114,9 +118,22 @@ public class Test5 {
 				String convertedDataType = convertDataType(asdfg);
 				if (list.contains(convertedDataType)) {
 					nameOFVariable = poi.getName();
+				} else if (convertedDataType.equalsIgnoreCase("List")) {
+
+				} else {
+					nameOFVariable = poi.getName() + "DTO";
+					convertedDataType = convertedDataType + "DTO";
 				}
-				printWriter.println("\t" + "private " + convertedDataType + " " + nameOFVariable + ";");
+				if (!convertedDataType.equalsIgnoreCase("List")) {
+					printWriter.println("\t" + "private " + convertedDataType + " " + nameOFVariable + ";");
+					hash_map.put(nameOFVariable, convertedDataType);
+				}
+
 			}
+
+			printWriter.println();
+			getterAndSetter(hash_map, printWriter);
+
 			printWriter.println("}");
 			printWriter.close();
 		} catch (Exception e) {
@@ -124,6 +141,33 @@ public class Test5 {
 		}
 
 		return false;
+	}
+
+	private static void getterAndSetter(Map<String, String> hash_map, PrintWriter printWriter) {
+		// TODO Auto-generated method stub
+
+		for (Map.Entry<String, String> iterable_element : hash_map.entrySet()) {
+
+			String key = iterable_element.getValue(); // For Data type
+			String value = iterable_element.getKey(); // For Data Variable
+
+			String mainValue = value.substring(0, 1).toUpperCase() + value.substring(1);
+
+			printWriter.println("\t" + "public " + key + " " + "get" + mainValue + "() {");
+			printWriter.println("\t\t" + "return " + value + ";");
+			printWriter.println("\t}");
+			printWriter.println();
+
+			printWriter.println("\t" + "public void " + "set" + mainValue + "(" + key + " " + value + ") {");
+			printWriter.println("\t\t" + "this." + value + " = " + value + ";");
+			printWriter.println("\t}");
+			printWriter.println();
+		}
+
+//		public void setUserId(String userId) {
+//			this.userId = userId;
+//		}
+
 	}
 
 	private static String convertDataType(String asdfg) {
@@ -139,6 +183,8 @@ public class Test5 {
 			returnValue = asdfg;
 		} else if (asdfg.equalsIgnoreCase("date")) {
 			returnValue = "long";
+		} else {
+			returnValue = asdfg;
 		}
 		return returnValue;
 	}
