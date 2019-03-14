@@ -66,7 +66,13 @@ public class Test5 {
 		}
 
 		Boolean flag1 = Test5.createModelSetterExtension(modelNameWithItsVariableNames);
+		Boolean flag2 = Test5.createDTOSetterExtension(modelNameWithItsVariableNames);
 
+	}
+
+	private static Boolean createDTOSetterExtension(Map<String, List<Field>> modelNameWithItsVariableNames) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	private static boolean createModelSetterExtension(Map<String, List<Field>> modelNameWithItsVariableNames) {
