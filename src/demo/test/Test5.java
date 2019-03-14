@@ -16,9 +16,11 @@ public class Test5 {
 	static String filePath = "src/demo/models";
 	static List<Field> newFieldList = new ArrayList<>();
 	static List<String> listOfModelClasses = new ArrayList<>();
-	static Map<String, List<Field>> modelNameWithItsVariableNames = new HashMap<>();
 
+	@SuppressWarnings("unused")
 	public static void main(String[] args) {
+
+		Map<String, List<Field>> modelNameWithItsVariableNames = new HashMap<>();
 
 		String filePath = "src/demo/models";
 
@@ -63,11 +65,11 @@ public class Test5 {
 			}
 		}
 
-		Boolean flag1 = Test5.createModeSetterExtension();
+		Boolean flag1 = Test5.createModeSetterExtension(modelNameWithItsVariableNames);
 
 	}
 
-	private static boolean createModeSetterExtension() {
+	private static boolean createModeSetterExtension(Map<String, List<Field>> modelNameWithItsVariableNames) {
 
 		try {
 			String dtoFolderPath = Test5.createNewFolders(mainFolderPath, filePath, "ModelAndDTOSetterExtension");
@@ -83,7 +85,8 @@ public class Test5 {
 			printWriter.println("class ModelAndDTOSetterExtension {");
 			printWriter.println();
 
-			printWriter.println(" // HelperExtension helperExtension = new HelperExtension()");
+			printWriter.println("\tHelperExtension helperExtension = new HelperExtension();");
+			printWriter.println();
 
 			createModeSetterExtensionMethods(modelNameWithItsVariableNames, printWriter);
 
@@ -101,6 +104,8 @@ public class Test5 {
 //		import com.onlinetest.dto.AddressDetailsDTO;
 
 //		classPath
+
+		printWriter.println("import demo.test.HelperExtension;");
 
 		for (String a : listOfModelsName) {
 
@@ -121,44 +126,50 @@ public class Test5 {
 			List<Field> fieldList = iterable_element.getValue(); // For model fields List
 			String mainValue = model.substring(0, 1).toLowerCase() + model.substring(1);
 
-			printWriter.println("\t public " + model + " get" + model + "(" + model + "DTO dto , " + model + " "
+			printWriter.println("\tpublic " + model + " get" + model + "(" + model + "DTO dto, " + model + " "
 					+ mainValue + "Model) {");
 
-			for (Field field : fieldList) {
+			printWriter.println("\t\t" + model + " model = null;");
 
-				printWriter.println("\t\t" + model + " model = null;");
-				printWriter.println("\t\t if (!helperExtension.isNullOrEmpty(dto)) {");
+			if (fieldList.size() > 0) {
 
-				printWriter.println("\t\t\t if (helperExtension.isNullOrEmpty(" + mainValue + ")) {");
+				printWriter.println("\t\tif (!helperExtension.isNullOrEmpty(dto)) {");
 
-				printWriter.println("\t\t\t model = new " + model + "();");
-				printWriter.println("\t\t} else {");
-				printWriter.println("\t\t\t model = " + mainValue + "Model;");
-				printWriter.println("\t\t }");
+				printWriter.println("\t\t\tif (helperExtension.isNullOrEmpty(" + mainValue + "Model)) {");
 
-				if (field.getName().toLowerCase().contains("Id".toLowerCase())) {
+				printWriter.println("\t\t\t\tmodel = new " + model + "();");
+				printWriter.println("\t\t\t} else {");
+				printWriter.println("\t\t\t\tmodel = " + mainValue + "Model;");
+				printWriter.println("\t\t\t}");
 
-					String id = field.getName().substring(0, 1).toUpperCase() + field.getName().substring(1);
-					printWriter.println("\t\t\t if (!helperExtension.isNullOrEmpty(dto.get" + id + "())) {");
-					printWriter.println("\t\t\t model.set" + id + "(dto.get" + id + "());");
+				for (Field field : fieldList) {
+					if (field.getName().toLowerCase().contains("Id".toLowerCase())) {
 
-					printWriter.println("\t\t} else {");
+						String id = field.getName().substring(0, 1).toUpperCase() + field.getName().substring(1);
+						printWriter.println("\t\t\tif (!helperExtension.isNullOrEmpty(dto.get" + id + "())) {");
+						printWriter.println("\t\t\t\tmodel.set" + id + "(dto.get" + id + "());");
 
-					printWriter.println("\t\t model.set" + id + "(ID_ + helperExtension.getUniqueId());");
-					printWriter.println("\t\t}");
-//					if (!helperExtension.isNullOrEmpty(dto.getAddressId())) {
-//					model.setAddressId(dto.getAddressId());
-//				} else {
-//					model.setAddressId("ADD_ID_" + helperExtension.getUniqueId());
-//				}
+						printWriter.println("\t\t\t} else {");
+//						"\"Hello\""
+						printWriter.println("\t\t\t\tmodel.set" + id + "(\"ID_\" + helperExtension.getUniqueId());");
+						printWriter.println("\t\t\t}");
+//							if (!helperExtension.isNullOrEmpty(dto.getAddressId())) {
+//							model.setAddressId(dto.getAddressId());
+//						} else {
+//							model.setAddressId("ADD_ID_" + helperExtension.getUniqueId());
+//						}
 
+					}
 				}
 
 				printWriter.println("\t\t}");
-				printWriter.println("\t\t return model;");
 
 			}
+
+			printWriter.println("\t\treturn model;");
+
 			printWriter.println("\t}");
+			printWriter.println();
 
 		}
 
