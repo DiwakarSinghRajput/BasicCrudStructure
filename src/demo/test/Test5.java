@@ -11,7 +11,7 @@ import java.util.Map;
 
 public class Test5 {
 
-	static String mainFolderPath = "C:/test-wokspace/demo";
+	static String mainFolderPath = "/home/ued/Documents/workspace-BasicCrudStructure/BasicCrudStructure";
 	static String classPath = "demo.models.";
 	static String filePath = "src/demo/models";
 
@@ -67,12 +67,181 @@ public class Test5 {
 
 		Boolean flag1 = Test5.createModelSetterExtension(modelNameWithItsVariableNames);
 		Boolean flag2 = Test5.createDTOSetterExtension(modelNameWithItsVariableNames);
+		Boolean flag3 = Test5.createDAO(listOfModelClasses, modelNameWithItsVariableNames);
+
+	}
+
+	private static Boolean createDAO(List<String> listOfModelClasses,
+			Map<String, List<Field>> modelNameWithItsVariableNames) {
+
+		try {
+
+			for (Map.Entry<String, List<Field>> iterable_element : modelNameWithItsVariableNames.entrySet()) {
+
+				String model = iterable_element.getKey(); // For model name
+				List<Field> fieldList = iterable_element.getValue(); // For model fields List
+				String param = " ";
+				List<String> idFields = getParamFields(fieldList);
+				for (String parameters : idFields) {
+					param = "String " + parameters + ", " + param;
+				}
+
+				String daoPath = Test5.createNewFolders(mainFolderPath, filePath, "Dao");
+				// for (String model : listOfModelClasses) { // for model name
+
+				File f = new File(daoPath + "/" + model + "Dao.java");
+
+				PrintWriter printWriter = new PrintWriter(f);
+				printWriter.println("package " + Test5.classPath.split("\\.")[0] + ".Dao;");
+				printWriter.println();
+				printWriter.println("import java.util.List;");
+				printWriter.println("import demo.test.DatabaseHelper;");
+				printWriter.println("import demo.models." + model + ";");
+				printWriter.println("import demo.test.BaseDao;");
+				printWriter.println();
+				printWriter.println("public interface " + model + "Dao extends BaseDao<" + model + ">{");
+				printWriter.println();
+				printWriter.println("\tList<" + model + "> get(" + param + "DatabaseHelper databaseHelper);");
+				printWriter.println("}");
+				printWriter.close();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return false;
+//			List<Article> getAll(String artId, DatabaseHelper databaseHelper);
+	}
+
+	// dto.setQuestionsDTO(getQuestionsDTO(model.getQuestions()));
+
+	private static List<String> getParamFields(List<Field> fieldList) {
+
+		List<String> list = new ArrayList<>();
+		list.add("java.lang.String");
+		list.add("java.lang.Integer");
+		list.add("java.lang.Long");
+		list.add("java.lang.Double");
+		list.add("java.lang.Float");
+		list.add("java.lang.Boolean");
+		list.add("java.util.Date");
+		list.add("long");
+
+		List<String> parameters = new ArrayList<>();
+		parameters.clear();
+		for (Field field : fieldList) {
+
+			if (field.getName().toLowerCase().contains("Id".toLowerCase())) {
+				parameters.add(field.getName().substring(0, 3) + "Id");
+			} else if (!list.contains(field.getType().getName())) {
+				parameters.add(field.getName().substring(0, 3) + "Id");
+			}
+
+		}
+		return parameters;
 
 	}
 
 	private static Boolean createDTOSetterExtension(Map<String, List<Field>> modelNameWithItsVariableNames) {
-		// TODO Auto-generated method stub
-		return null;
+		try {
+			String ModelAndDTOSetterExtensionPath = Test5.createNewFolders(mainFolderPath, filePath,
+					"ModelAndDTOSetterExtension");
+
+			File f = new File(ModelAndDTOSetterExtensionPath + "/DtoSetterExtension.java");
+
+			PrintWriter printWriter = new PrintWriter(f);
+			printWriter.println("package " + Test5.classPath.split("\\.")[0] + ".ModelAndDTOSetterExtension;");
+			printWriter.println();
+			createModelSetterExtensionImports(listOfModelClasses, printWriter);
+			printWriter.println();
+			printWriter.println("class DTOSetterExtension {");
+			printWriter.println();
+			printWriter.println("\tHelperExtension helperExtension = new HelperExtension();");
+			printWriter.println();
+			createDtoSetterExtensionMethods(modelNameWithItsVariableNames, printWriter);
+
+			printWriter.println("}");
+
+			printWriter.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return false;
+	}
+
+	private static void createDtoSetterExtensionMethods(Map<String, List<Field>> modelNameWithItsVariableNames,
+			PrintWriter printWriter) {
+
+		List<String> list = new ArrayList<>();
+		list.add("java.lang.String");
+		list.add("java.lang.Integer");
+		list.add("java.lang.Long");
+		list.add("java.lang.Double");
+		list.add("java.lang.Float");
+		list.add("java.lang.Boolean");
+		list.add("java.util.Date");
+		list.add("long");
+
+		List<String> listName = new ArrayList<>();
+		listName.add("isFlag");
+		listName.add("createdOn");
+		listName.add("updatedOn");
+
+		for (Map.Entry<String, List<Field>> iterable_element : modelNameWithItsVariableNames.entrySet()) {
+
+			String model = iterable_element.getKey(); // For model name
+			List<Field> fieldList = iterable_element.getValue(); // For model fields List
+			String mainValue = model.substring(0, 1).toLowerCase() + model.substring(1);
+
+			printWriter.println("\tpublic " + model + "DTO get" + model + "DTO(" + model + " model) {");
+			printWriter.println("\t\t" + model + "DTO dto = new " + model + "DTO();");
+
+			if (fieldList.size() > 0) {
+
+				printWriter.println("\t\tif (!helperExtension.isNullOrEmpty(model)) {");
+
+				String id = "";
+
+				String primaryKey = "";
+
+				for (Field field : fieldList) {
+					id = field.getName().substring(0, 1).toUpperCase() + field.getName().substring(1);
+
+					if (field.getName().toLowerCase().contains("Id".toLowerCase())) {
+
+						primaryKey = id;
+
+						printWriter.println("\t\t\tif (!helperExtension.isNullOrEmpty(model.get" + id + "()))");
+						printWriter.println("\t\t\t\tdto.set" + id + "(model.get" + id + "());");
+
+					} else if (field.getType().getName().equalsIgnoreCase("java.util.Date")
+							&& listName.contains(field.getName())) {
+						System.out.println("==$$$" + field.getName());
+
+						printWriter.println("\t\t\tif (!helperExtension.isNullOrEmpty(model.get" + id + "()))");
+						printWriter.println("\t\t\t\tdto.set" + id + "(model.get" + id + "().getTime());");
+
+					} else if (!list.contains(field.getType().getName())) {
+						System.out.println("==" + field.getName());
+
+						printWriter.println("\t\t\tdto.set" + id + "DTO(get" + id + "DTO(model.get" + id + "()));");
+					} else if (!listName.contains(field.getName())) {
+						System.out.println(field.getName());
+
+						printWriter.println("\t\t\tdto.set" + id + "(model.get" + id + "());");
+					}
+
+				}
+				printWriter.println("\t\t}");
+			}
+
+			printWriter.println("\t\treturn dto;");
+
+			printWriter.println("\t}");
+			printWriter.println();
+
+		}
+
 	}
 
 	private static boolean createModelSetterExtension(Map<String, List<Field>> modelNameWithItsVariableNames) {
@@ -134,6 +303,7 @@ public class Test5 {
 		list.add("java.lang.Float");
 		list.add("java.lang.Boolean");
 		list.add("java.util.Date");
+		list.add("long");
 
 		List<String> listName = new ArrayList<>();
 		listName.add("isFlag");
@@ -198,6 +368,8 @@ public class Test5 {
 //								.println("\t\t\t\tmodel.set" + id + "(get" + id + "(dto.get" + id + "DTO(), null));");
 					} else if (!list.contains(field.getType().getName())) {
 						System.out.println("==" + field.getName());
+
+						System.out.println("@@" + field.getType().getName());
 //						model.setStatus(getStatus(dto.getStatusDTO(), null));
 
 						printWriter.println("\t\t\tmodel.set" + id + "(get" + id + "(dto.get" + id + "DTO(), null));");
