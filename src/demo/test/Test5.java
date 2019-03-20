@@ -11,12 +11,16 @@ import java.util.Map;
 
 public class Test5 {
 
-	static String mainFolderPath = "/home/ued/Documents/workspace-BasicCrudStructure/BasicCrudStructure";
+	static String mainFolderPath = "C:/test-wokspace/demo";
 	static String classPath = "demo.models.";
 	static String filePath = "src/demo/models";
-	static String helperExtension = "HelperExtension helperExtension = new HelperExtension();";
+	static String responserModelListPath = "import demo.test.ResponseModelList;";
+	static String constantExtensionPath = "import demo.test.ConstantExtension;";
+	static String helperExtensionPath = "import demo.test.HelperExtension;";
 
 	static List<String> listOfModelClasses = new ArrayList<>();
+
+	static String dtoFolderPkg = "";
 
 	@SuppressWarnings("unused")
 	public static void main(String[] args) {
@@ -68,103 +72,292 @@ public class Test5 {
 
 		Boolean flag1 = Test5.createModelSetterExtension(modelNameWithItsVariableNames);
 		Boolean flag2 = Test5.createDTOSetterExtension(modelNameWithItsVariableNames);
-		Boolean flag3 = Test5.createDAO(modelNameWithItsVariableNames);
-		Boolean falg4 = Test5.createDaoImpl(modelNameWithItsVariableNames);
+		Boolean flag3 = Test5.createDAO(listOfModelClasses, modelNameWithItsVariableNames);
+		Boolean serviceFlag = createService(modelNameWithItsVariableNames);
+		Boolean serviceImplFlag = createServiceImpl(modelNameWithItsVariableNames);
+		Boolean controllerFlag = createController(modelNameWithItsVariableNames);
+
 	}
 
-	private static Boolean createDaoImpl(Map<String, List<Field>> modelNameWithItsVariableNames) {
+	private static Boolean createController(Map<String, List<Field>> modelNameWithItsVariableNames) {
 		try {
-
 			for (Map.Entry<String, List<Field>> iterable_element : modelNameWithItsVariableNames.entrySet()) {
 
 				String model = iterable_element.getKey(); // For model name
 				List<Field> fieldList = iterable_element.getValue(); // For model fields List
-				String param = " ";
+
 				List<String> idFields = getParamFields(fieldList);
+				String param2 = " ";
+
 				for (String parameters : idFields) {
-					param = "String " + parameters + ", " + param;
+					param2 = parameters + "," + param2;
 				}
 
-				String daoPath = Test5.createNewFolders(mainFolderPath, filePath, "DaoImpl");
+				String param = " ";
+
+				for (String parameters : idFields) {
+					param = "@RequestHeader(value = " + "\"" + parameters + "\"" + ", defaultValue = \"\") String "
+							+ parameters + ",\r\n " + param;
+				}
+
+				// Create a newFolder
+				String daoPath = Test5.createNewFolders(mainFolderPath, filePath, "controller");
 				// for (String model : listOfModelClasses) { // for model name
 
-				File f = new File(daoPath + "/" + model + "DaoImpl.java");
+				// Create a file
+				File f = new File(daoPath + "/" + model + "Service.java");
 
 				PrintWriter printWriter = new PrintWriter(f);
-				printWriter.println("package " + Test5.classPath.split("\\.")[0] + ".DaoImpl;");
+				printWriter.println("package " + Test5.classPath.split("\\.")[0] + ".controller;");
 				printWriter.println();
-				daoImplImports(printWriter);
-				printWriter.println("import demo.test.DatabaseHelper;");
-				printWriter.println("import demo.models." + model + ";");
-				printWriter.println("import demo.test.BaseDaoImpl;");
-				printWriter.println("import demo.Dao." + model + "Dao;");
-				printWriter.println("\n@Repository");
-				printWriter.println("public class " + model + "DaoImpl extends BaseDaoImpl<" + model + "> implements "
-						+ model + "Dao {\n\n\t@PersistenceContext\n\t private EntityManager entityManager;\n\n\t"
-						+ helperExtension + "\n\n\t @Override\n\t public List<" + model + "> get(String id, " + param
-						+ "DatabaseHelper databaseHelper) { \n\t CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();\n\t CriteriaQuery<"
-						+ model + "> criteriaQuery = criteriaBuilder.createQuery(" + model + ".class);\n\t Root<"
-						+ model + "> root = criteriaQuery.from(" + model
-						+ ".class);\n\t List<Predicate> predicateList = new ArrayList<Predicate>();\n\t if (!helperExtension.isNullOrEmpty(id)) {\r\n"
-						+ "			predicateList.add(criteriaBuilder.equal(root.get(\"id\"), id));\r\n" + "		}");
+				printWriter.println("import java.util.List;");
+				printWriter.println();
 
-				Map<String, String> hash_map = getParamKeyOrValue(fieldList);
-				if (hash_map.size() > 0) {
-					for (Map.Entry<String, String> ie : hash_map.entrySet()) {
-						String key = ie.getKey();
-						String value = ie.getValue();
-						printWriter.println("\t if (!helperExtension.isNullOrEmpty(" + value + ")) {\r\n"
-								+ "			predicateList.add(criteriaBuilder.equal(root.get(\"" + key + "\").get(\""
-								+ value + "\")," + value + "));\r\n" + "		}");
-					}
-				}
+				printWriter.println("import org.springframework.beans.factory.annotation.Autowired;");
+				printWriter.println("import org.springframework.web.bind.annotation.GetMapping;");
+				printWriter.println("import org.springframework.web.bind.annotation.DeleteMapping;");
+				printWriter.println("import org.springframework.web.bind.annotation.PostMapping;");
+				printWriter.println("import org.springframework.web.bind.annotation.RequestBody;");
+				printWriter.println("import org.springframework.web.bind.annotation.RequestHeader;");
+				printWriter.println("import org.springframework.web.bind.annotation.RequestMapping;");
+				printWriter.println("import org.springframework.web.bind.annotation.RestController;");
 
-				printWriter.println(
-						"\t predicateList.add(criteriaBuilder.equal(root.get(\"isFlag\"), 1));\n\t if (!helperExtension.isNullOrEmpty(databaseHelper)) {\n\t\t// Search Starts\n\t\tif (!helperExtension.isNullOrEmpty(databaseHelper.getSearch())) {\n\t\t\tpredicateList.add(criteriaBuilder.like(root.get(\"\"), databaseHelper.getSearch() + \"%\"));\n\t\t}\n\t\t// Sorting Starts\r\n"
-								+ "		if (databaseHelper.getSortOrder().equalsIgnoreCase(eOrderBy.enAsc.getKey())) {\r\n"
-								+ "			criteriaQuery.orderBy(criteriaBuilder.asc(root.get(databaseHelper.getSortBy())));\r\n"
-								+ "		} else {\r\n"
-								+ "			criteriaQuery.orderBy(criteriaBuilder.desc(root.get(databaseHelper.getSortBy())));\r\n"
-								+ "		}\r\n"
-								+ "		criteriaQuery.where(criteriaBuilder.and(predicateList.toArray(new Predicate[predicateList.size()])));\r\n"
-								+ "		// Pagination Starts\r\n"
-								+ "		if (databaseHelper.getCurrentPage() != 0 && databaseHelper.getItemPerPage() != 0) {\r\n"
-								+ "			final TypedQuery<" + model
-								+ "> typedQuery = entityManager.createQuery(criteriaQuery);\r\n"
-								+ "			typedQuery.setFirstResult((databaseHelper.getCurrentPage() - 1) * databaseHelper.getItemPerPage());\r\n"
-								+ "			typedQuery.setMaxResults(databaseHelper.getItemPerPage());\r\n"
-								+ "			return typedQuery.getResultList();\r\n" + "		}\r\n" + "	} else {\r\n"
-								+ "			criteriaQuery.where(criteriaBuilder.and(predicateList.toArray(new Predicate[predicateList.size()])));\r\n"
-								+ "		}\r\n"
-								+ "		return entityManager.createQuery(criteriaQuery).getResultList();\r\n" + "	}");
+				printWriter.println(responserModelListPath);
+				printWriter.println("import " + dtoFolderPkg + "DTO." + model + "DTO;");
+				printWriter.println("import " + dtoFolderPkg + "Service." + model + "Service;");
 
-				printWriter.println("\t@Override\r\n" + "	public List<" + model + "> exist(" + model
-						+ "DTO dto) {\r\n"
-						+ "		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();\r\n"
-						+ "		CriteriaQuery<" + model + "> criteriaQuery = criteriaBuilder.createQuery(" + model
-						+ ".class);\r\n" + "		Root<" + model + "> root = criteriaQuery.from(" + model
-						+ ".class);\r\n" + "		List<Predicate> predicateList = new ArrayList<Predicate>();\r\n"
-						+ "		if (!helperExtension.isNullOrEmpty(dto.getId())) {\r\n"
-						+ "			predicateList.add(criteriaBuilder.notEqual(root.get(\"id\"), dto.getId()));\r\n"
-						+ "		}\r\n" + "		predicateList.add(criteriaBuilder.equal(root.get(\"isFlag\"), 1));\r\n"
-						+ "		criteriaQuery.where(criteriaBuilder.and(predicateList.toArray(new Predicate[predicateList.size()])));\r\n"
-						+ "		return entityManager.createQuery(criteriaQuery).getResultList();\r\n" + "	}\r\n"
-						+ "\r\n" + "}\r\n" + "");
+				printWriter.println("@RestController\r\n" +
+
+						"@RequestMapping(" + "\"" + model + "\"" + ")\r\n" + "public class " + model
+						+ "Controller {\r\n" + "\r\n" + "	@Autowired\r\n" + "	private " + model
+						+ "Service service;\r\n" + "\r\n" + "	@PostMapping(\"/createOrUpdate\")\r\n"
+						+ "	public ResponseModelList<" + model + "DTO> createOrUpdate(@RequestBody " + model
+						+ "DTO dto) {\r\n" + "		ResponseModelList<" + model
+						+ "DTO> responseModel = service.createOrUpdate(dto);\r\n" + "		return responseModel;\r\n"
+						+ "	}\r\n" + "\r\n" + "	@GetMapping({ \"/all\", \"/single\" })\r\n"
+						+ "	public ResponseModelList<" + model
+						+ "DTO> get(@RequestHeader(value = \"id\", defaultValue = \"\") String id,\r\n"
+
+						+ param
+
+						+ "			@RequestHeader(value = \"search\", defaultValue = \"\") String search,\r\n"
+						+ "			@RequestHeader(value = \"currentPage\", defaultValue = \"0\") int currentPage,\r\n"
+						+ "			@RequestHeader(value = \"itemPerPage\", defaultValue = \"0\") int itemPerPage,\r\n"
+						+ "			@RequestHeader(value = \"sortBy\", defaultValue = \"\") String sortBy) {\r\n"
+						+ "			@RequestHeader(value = \"sortOrder\", defaultValue = \"\") String sortOrder) {\r\n"
+						+ "			DatabaseHelper databaseHelper = new DatabaseHelper(search, currentPage, itemPerPage, sortBy, sortOrder);\r\n"
+						+ "			ResponseModelList<" + model + "DTO> responseModel = service.get(id, " + param2
+						+ "databaseHelper);\r\n" + "			return responseModel;\r\n" + "	}\r\n" + "\r\n"
+						+ "	@DeleteMapping\r\n" + "	public ResponseModelList<" + model
+						+ "DTO> deleteByIds(@RequestHeader(\"ids\") List<String> ids) {\r\n"
+						+ "		ResponseModelList<" + model + "DTO> responseModel = service.deleteByIds(ids);\r\n"
+						+ "		return responseModel;\r\n" + "	}\r\n" + "}");
+
+				printWriter.println();
 
 				printWriter.close();
 			}
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		return true;
+	}
+
+	private static Boolean createService(Map<String, List<Field>> modelNameWithItsVariableNames) {
+		try {
+
+			for (Map.Entry<String, List<Field>> iterable_element : modelNameWithItsVariableNames.entrySet()) {
+
+				String model = iterable_element.getKey(); // For model name
+				List<Field> fieldList = iterable_element.getValue(); // For model fields List
+
+				String param = " ";
+				List<String> idFields = getParamFields(fieldList);
+				for (String parameters : idFields) {
+					param = " String " + parameters + ", " + param;
+				}
+
+				// Create a newFolder
+				String daoPath = Test5.createNewFolders(mainFolderPath, filePath, "Service");
+				// for (String model : listOfModelClasses) { // for model name
+
+				// Create a file
+				File f = new File(daoPath + "/" + model + "Service.java");
+
+				PrintWriter printWriter = new PrintWriter(f);
+				printWriter.println("package " + Test5.classPath.split("\\.")[0] + ".Service;");
+				printWriter.println();
+				printWriter.println("import java.util.List;");
+				printWriter.println();
+				printWriter.println(responserModelListPath);
+				printWriter.println("import " + classPath + model + ";");
+				printWriter.println("import " + dtoFolderPkg + "DTO." + model + "DTO;");
+
+				printWriter.println();
+
+				printWriter.println("public interface " + model + "Service {\r\n" + "\r\n" + "\tResponseModelList<"
+						+ model + "DTO> createOrUpdate(" + model + "DTO dto);\r\n" + "\r\n" + "\tResponseModelList<"
+						+ model + "DTO> get(String id," + param + "DatabaseHelper databaseHelper);\r\n" + "\r\n"
+						+ "\tResponseModelList<" + model + "DTO> deleteByIds(List<String> ids);\r\n" + "\r\n" + "}");
+
+				printWriter.close();
+
+			}
+
+//			ResponseModelList<AclRoleDTO> createOrUpdate(AclRoleDTO dto);
+//
+//			ResponseModelList<AclRoleDTO> get(String roleId, String userId, String roleTypeId, String groupId, String statusId,
+//					String sectionId, DatabaseHelper databaseHelper);
+//
+//			ResponseModelList<AclRoleDTO> deleteByIds(List<String> ids);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
 		return false;
 	}
 
-	private static void daoImplImports(PrintWriter printWriter) {
-		printWriter.println(
-				"import java.util.List;\nimport java.util.ArrayList;\nimport javax.persistence.EntityManager;\nimport javax.persistence.PersistenceContext;\nimport javax.persistence.TypedQuery;\nimport javax.persistence.criteria.CriteriaBuilder;\nimport javax.persistence.criteria.CriteriaQuery;\nimport javax.persistence.criteria.Predicate;\nimport javax.persistence.criteria.Root;\nimport org.springframework.stereotype.Repository;");
+	private static Boolean createServiceImpl(Map<String, List<Field>> modelNameWithItsVariableNames) {
+		try {
+
+			for (Map.Entry<String, List<Field>> iterable_element : modelNameWithItsVariableNames.entrySet()) {
+
+				String model = iterable_element.getKey(); // For model name
+				List<Field> fieldList = iterable_element.getValue(); // For model fields List
+
+				String param = " ";
+				List<String> idFields = getParamFields(fieldList);
+				for (String parameters : idFields) {
+					param = parameters + "," + param;
+				}
+
+				String param2 = " ";
+
+				for (String parameters : idFields) {
+					param2 = " String " + parameters + "," + param2;
+				}
+
+				// Create a newFolder
+				String daoPath = Test5.createNewFolders(mainFolderPath, filePath, "ServiceImpl");
+				// for (String model : listOfModelClasses) { // for model name
+
+				// Create a file
+				File f = new File(daoPath + "/" + model + "ServiceImpl.java");
+
+				PrintWriter printWriter = new PrintWriter(f);
+
+				// import start form here
+				printWriter.println("package " + Test5.classPath.split("\\.")[0] + ".ServiceImpl;");
+				printWriter.println();
+				printWriter.println("import java.util.List;");
+				printWriter.println("import java.util.ArrayList;");
+				printWriter.println("import org.apache.log4j.Logger;");
+				printWriter.println("import org.springframework.beans.factory.annotation.Autowired;");
+				printWriter.println("import org.springframework.stereotype.Service;");
+				printWriter.println("import org.springframework.transaction.annotation.Transactional;");
+				printWriter.println(responserModelListPath);
+				printWriter.println(constantExtensionPath);
+				printWriter.println(helperExtensionPath);
+				printWriter.println();
+				printWriter.println("import " + dtoFolderPkg + "Dao." + model + "Dao;");
+				printWriter.println("import " + dtoFolderPkg + "models." + model + ";");
+				printWriter.println("import " + dtoFolderPkg + "DTO." + model + "DTO;");
+				printWriter.println("import " + dtoFolderPkg + "Service." + model + "Service;");
+				printWriter.println("import " + dtoFolderPkg + "ModelAndDTOSetterExtension.ModelSetterExtension;");
+				printWriter.println("import " + dtoFolderPkg + "ModelAndDTOSetterExtension.DTOSetterExtension;");
+				printWriter.println();
+				// import end form here
+
+				// methods start from here
+
+				/*
+				 * createOrUpdate() method start from here
+				 */
+				printWriter.println("@Service\r\n" + "@Transactional(readOnly = true)\r\n" + "public class " + model
+						+ "ServiceImpl implements " + model + "Service {\r\n" + "\r\n" + "	@Autowired\r\n"
+						+ "	private " + model + "Dao dao;\r\n" + "\r\n"
+						+ "	final static Logger logger = Logger.getLogger(" + model + "ServiceImpl.class);\r\n"
+						+ "	ResponseModelList<" + model + "DTO> responseModel = new ResponseModelList<>();\r\n"
+						+ "	HelperExtension helperExtension = new HelperExtension();\r\n" + "\r\n"
+						+ "	private boolean status = false;\r\n" + "	private String message = \"\";\r\n"
+						+ "	private List<" + model + "DTO> list = null;\r\n" + "\r\n" + "\r\n" + "	@Override\r\n"
+						+ "	@Transactional(readOnly = false)\r\n" + "	public ResponseModelList<" + model
+						+ "DTO> createOrUpdate(" + model + "DTO dto) {\r\n" + "		list = new ArrayList<>();\r\n"
+						+ "		try {\r\n" + "			List<" + model + "> models = dao.exists(dto);\r\n"
+						+ "			if (models.size() > 0) {\r\n"
+						+ "				putValueInResponseModel(false, ConstantExtension.SAME_NAME_IN_CLASS, null, null);\r\n"
+						+ "			} else {\r\n"
+						+ "				if (!helperExtension.isNullOrEmpty(dto.getId())) {\r\n"
+						+ "					putValueInResponseModel(true, ConstantExtension.CLASS_UPDATED, dto, null);\r\n"
+						+ "\r\n" + "				} else {\r\n"
+						+ "					putValueInResponseModel(true, ConstantExtension.CLASS_ADDED, dto, null);\r\n"
+						+ "				}\r\n" + "			}\r\n" + "			responseModel = new ResponseModelList<"
+						+ model + "DTO>(status, message, list);\r\n" + "		} catch (Exception e) {\r\n"
+						+ "			e.printStackTrace();\r\n" + "			responseModel = new ResponseModelList<"
+						+ model + "DTO>(status, message, list);\r\n" + "		}\r\n"
+						+ "		return responseModel;\r\n" + "	}\r\n" + "\r\n"
+						+ "	// This method is used to put the value in Global Variables(status, message,\r\n"
+						+ "	// list\r\n" + "	// of particular dto)\r\n"
+						+ "	public void putValueInResponseModel(boolean status, String message, " + model + "DTO dto, "
+						+ model + " classesModel) {\r\n" + "		this.status = status;\r\n"
+						+ "		this.message = message;\r\n" + "		List<" + model
+						+ "DTO> dtos = new ArrayList<>();\r\n" + "		if (!helperExtension.isNullOrEmpty(dto)) {\r\n"
+						+ "			" + model + " model = new ModelSetterExtension().get" + model
+						+ "(dto, classesModel);\r\n" + "			dao.saveOrUpdate(model);\r\n"
+						+ "			dto.setId(model.getId());\r\n" + "			dtos.add(dto);\r\n"
+						+ "			this.list = dtos;\r\n" + "		}\r\n" + "	}\r\n" + "\r\n" + "	@Override\r\n"
+						+ "	public ResponseModelList<" + model + "DTO> get(String id," + param2
+						+ "DatabaseHelper databaseHelper) {\r\n" + "		list = new ArrayList<>();\r\n"
+						+ "		int numberOfPages = 0;\r\n" + "		try {\r\n" + "			List<" + model
+						+ "> daoList = dao.get(id, " + param + "databaseHelper);\r\n"
+						+ "			Integer count[] = null;\r\n"
+						+ "			if (databaseHelper.getCurrentPage() != 0 && databaseHelper.getItemPerPage() != 0) {\r\n"
+						+ "				DatabaseHelper tempDatabasehelper = new DatabaseHelper(databaseHelper);\r\n"
+						+ "				int items = dao.get(id, " + param + "tempDatabasehelper).size();\r\n"
+						+ "				count = new HelperExtension().pagination(databaseHelper, items);\r\n"
+						+ "			}\r\n" + "			for (" + model + " model : daoList) {\r\n" + "				"
+						+ model + "DTO dto = new DTOSetterExtension().get" + model + "DTO(model);\r\n"
+						+ "				list.add(dto);\r\n" + "			}\r\n"
+						+ "			responseModel = new ResponseModelList<" + model
+						+ "DTO>(true, ConstantExtension.SUCCESS_RECEIVE, list, count,\r\n"
+						+ "					numberOfPages);\r\n" + "		} catch (Exception e) {\r\n"
+						+ "			e.printStackTrace();\r\n" + "			responseModel = new ResponseModelList<"
+						+ model + "DTO>(status, message, list);\r\n" + "		}\r\n"
+						+ "		return responseModel;\r\n" + "	}\r\n" + "\r\n" + "	@Override\r\n"
+						+ "	@Transactional(readOnly = false)\r\n" + "	public ResponseModelList<" + model
+						+ "DTO> deleteByIds(List<String> ids) {\r\n" + "		list = new ArrayList<>();\r\n"
+						+ "		try {\r\n" + "			for (String id : ids) {\r\n" + "				" + model
+						+ " model = dao.findById(id);\r\n" + "				model.setIsFlag(0);\r\n"
+						+ "				dao.saveOrUpdate(model);\r\n"
+						+ "				list.add(new DTOSetterExtension().get" + model + "DTO(model));\r\n"
+						+ "			}\r\n" + "			responseModel = new ResponseModelList<" + model
+						+ "DTO>(true, ConstantExtension.SUCCESS_MESSAGE_DELETED, list);\r\n"
+						+ "		} catch (Exception exception) {\r\n" + "			exception.printStackTrace();\r\n"
+						+ "			responseModel = new ResponseModelList<" + model
+						+ "DTO>(false, ConstantExtension.MESSAGE_ERROR, list);\r\n" + "		}\r\n"
+						+ "		return responseModel;\r\n" + "	}\r\n" + "	\r\n" + "}");
+				/*
+				 * createOrUpdate() method end from here
+				 */
+
+				// methods end from here
+
+//				printWriter.println("}");
+				printWriter.close();
+
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return false;
 	}
 
-	private static Boolean createDAO(Map<String, List<Field>> modelNameWithItsVariableNames) {
+	private static Boolean createDAO(List<String> listOfModelClasses,
+			Map<String, List<Field>> modelNameWithItsVariableNames) {
 
 		try {
 
@@ -178,9 +371,11 @@ public class Test5 {
 					param = "String " + parameters + ", " + param;
 				}
 
+				// Create a newFolder
 				String daoPath = Test5.createNewFolders(mainFolderPath, filePath, "Dao");
 				// for (String model : listOfModelClasses) { // for model name
 
+				// Create a file
 				File f = new File(daoPath + "/" + model + "Dao.java");
 
 				PrintWriter printWriter = new PrintWriter(f);
@@ -234,44 +429,21 @@ public class Test5 {
 
 	}
 
-	private static Map<String, String> getParamKeyOrValue(List<Field> fieldList) {
-		Map<String, String> hash_map = new HashMap<>();
-		List<String> list = new ArrayList<>();
-		list.add("java.lang.String");
-		list.add("java.lang.Integer");
-		list.add("java.lang.Long");
-		list.add("java.lang.Double");
-		list.add("java.lang.Float");
-		list.add("java.lang.Boolean");
-		list.add("java.util.Date");
-		list.add("long");
-
-		for (Field field : fieldList) {
-
-			if (!list.contains(field.getType().getName())) {
-				hash_map.put(field.getType().getName(), field.getName().substring(0, 4) + "Id");
-			}
-
-		}
-
-		return hash_map;
-	}
-
 	private static Boolean createDTOSetterExtension(Map<String, List<Field>> modelNameWithItsVariableNames) {
 		try {
 			String ModelAndDTOSetterExtensionPath = Test5.createNewFolders(mainFolderPath, filePath,
 					"ModelAndDTOSetterExtension");
 
-			File f = new File(ModelAndDTOSetterExtensionPath + "/DtoSetterExtension.java");
+			File f = new File(ModelAndDTOSetterExtensionPath + "/DTOSetterExtension.java");
 
 			PrintWriter printWriter = new PrintWriter(f);
 			printWriter.println("package " + Test5.classPath.split("\\.")[0] + ".ModelAndDTOSetterExtension;");
 			printWriter.println();
 			createModelSetterExtensionImports(listOfModelClasses, printWriter);
 			printWriter.println();
-			printWriter.println("class DTOSetterExtension {");
+			printWriter.println("public class DTOSetterExtension {");
 			printWriter.println();
-			printWriter.println("\t" + helperExtension);
+			printWriter.println("\tHelperExtension helperExtension = new HelperExtension();");
 			printWriter.println();
 			createDtoSetterExtensionMethods(modelNameWithItsVariableNames, printWriter);
 
@@ -330,7 +502,7 @@ public class Test5 {
 						printWriter.println("\t\t\tif (!helperExtension.isNullOrEmpty(model.get" + id + "()))");
 						printWriter.println("\t\t\t\tdto.set" + id + "(model.get" + id + "());");
 
-					} else if (field.getType().getName().equalsIgnoreCase("long")
+					} else if (field.getType().getName().equalsIgnoreCase("java.util.Date")
 							&& listName.contains(field.getName())) {
 						System.out.println("==$$$" + field.getName());
 
@@ -373,10 +545,10 @@ public class Test5 {
 			printWriter.println();
 			createModelSetterExtensionImports(listOfModelClasses, printWriter);
 			printWriter.println();
-			printWriter.println("class ModelSetterExtension {");
+			printWriter.println("public class ModelSetterExtension {");
 			printWriter.println();
 
-			printWriter.println("\t" + helperExtension);
+			printWriter.println("\tHelperExtension helperExtension = new HelperExtension();");
 			printWriter.println();
 
 			createModelSetterExtensionMethods(modelNameWithItsVariableNames, printWriter);
@@ -517,35 +689,6 @@ public class Test5 {
 
 		}
 
-//		public AddressDetails getAddressDetails(AddressDetailsDTO dto, AddressDetails addressDetailsModel) {
-//		AddressDetails model = null;
-//		if (!helperExtension.isNullOrEmpty(dto)) {
-//			if (helperExtension.isNullOrEmpty(addressDetailsModel)) {
-//				model = new AddressDetails();
-//			} else {
-//				model = addressDetailsModel;
-//			}
-//			if (!helperExtension.isNullOrEmpty(dto.getAddressId())) {
-//				model.setAddressId(dto.getAddressId());
-//			} else {
-//				model.setAddressId("ADD_ID_" + helperExtension.getUniqueId());
-//			}
-//			model.setAddLine1(dto.getAddLine1());
-//			model.setAddLine2(dto.getAddLine2());
-//			model.setCity(dto.getCity());
-//			model.setState(dto.getState());
-//			model.setPincode(dto.getPincode());
-//			if (helperExtension.isNullOrEmpty(dto.getAddressId())) {
-//				model.setCreatedOn(helperExtension.timestampToDate(dto.getCreatedOn()));
-//			} else {
-//				model.setCreatedOn(helperExtension.timestampToDate(dto.getCreatedOn()));
-//				model.setUpdatedOn(helperExtension.getDateTime());
-//			}
-//			model.setIsFlag(1);
-//		}
-//		return model;
-//	}
-
 	}
 
 	public static boolean createDTOs(String filePath, String dtoFileName, List<Field> privateFieldName,
@@ -562,6 +705,15 @@ public class Test5 {
 		list.add("double");
 		list.add("float");
 		list.add("boolean");
+
+		dtoFolderPkg = "";
+		// Start : setting the package name of dto before the file name and set that
+		// name into the "dtoFolderPkg" variable
+		String asdf[] = Test5.classPath.split("\\.");
+		for (int i = 0; i < asdf.length - 1; i++)
+			dtoFolderPkg = dtoFolderPkg + asdf[i] + ".";
+		// End : setting the package name of dto before the file name and set that name
+		// into the "dtoFolderPkg" variable
 
 		try {
 			List<String> asd = new ArrayList<>();
