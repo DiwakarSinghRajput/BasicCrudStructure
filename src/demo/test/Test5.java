@@ -101,7 +101,8 @@ public class Test5 {
 				printWriter.println();
 				printWriter.println("public interface " + model + "Dao extends BaseDao<" + model + ">{");
 				printWriter.println();
-				printWriter.println("\tList<" + model + "> get(" + param + "DatabaseHelper databaseHelper);");
+				printWriter
+						.println("\tList<" + model + "> get(String id, " + param + "DatabaseHelper databaseHelper);");
 				printWriter.println("}");
 				printWriter.close();
 			}
@@ -130,10 +131,10 @@ public class Test5 {
 		parameters.clear();
 		for (Field field : fieldList) {
 
-			if (field.getName().toLowerCase().contains("Id".toLowerCase())) {
-				parameters.add(field.getName().substring(0, 3) + "Id");
-			} else if (!list.contains(field.getType().getName())) {
-				parameters.add(field.getName().substring(0, 3) + "Id");
+//			if (field.getName().toLowerCase().contains("Id".toLowerCase())) {
+//				parameters.add(field.getName().substring(0, 3) + "Id");
+			if (!list.contains(field.getType().getName())) {
+				parameters.add(field.getName().substring(0, 4) + "Id");
 			}
 
 		}
