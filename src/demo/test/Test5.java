@@ -11,11 +11,16 @@ import java.util.Map;
 
 public class Test5 {
 
-	static String mainFolderPath = "/home/ued/Documents/workspace-BasicCrudStructure/BasicCrudStructure";
+	static String mainFolderPath = "C:/test-wokspace/demo";
 	static String classPath = "demo.models.";
 	static String filePath = "src/demo/models";
+	static String responserModelListPath = "import demo.test.ResponseModelList;";
+	static String constantExtensionPath = "import demo.test.ConstantExtension;";
+	static String helperExtensionPath = "import demo.test.HelperExtension;";
 
 	static List<String> listOfModelClasses = new ArrayList<>();
+
+	static String dtoFolderPkg = "";
 
 	@SuppressWarnings("unused")
 	public static void main(String[] args) {
@@ -68,7 +73,287 @@ public class Test5 {
 		Boolean flag1 = Test5.createModelSetterExtension(modelNameWithItsVariableNames);
 		Boolean flag2 = Test5.createDTOSetterExtension(modelNameWithItsVariableNames);
 		Boolean flag3 = Test5.createDAO(listOfModelClasses, modelNameWithItsVariableNames);
+		Boolean serviceFlag = createService(modelNameWithItsVariableNames);
+		Boolean serviceImplFlag = createServiceImpl(modelNameWithItsVariableNames);
+		Boolean controllerFlag = createController(modelNameWithItsVariableNames);
 
+	}
+
+	private static Boolean createController(Map<String, List<Field>> modelNameWithItsVariableNames) {
+		try {
+			for (Map.Entry<String, List<Field>> iterable_element : modelNameWithItsVariableNames.entrySet()) {
+
+				String model = iterable_element.getKey(); // For model name
+				List<Field> fieldList = iterable_element.getValue(); // For model fields List
+
+				List<String> idFields = getParamFields(fieldList);
+				String param2 = " ";
+
+				for (String parameters : idFields) {
+					param2 = parameters + "," + param2;
+				}
+
+				String param = " ";
+
+				for (String parameters : idFields) {
+					param = "@RequestHeader(value = " + "\"" + parameters + "\"" + ", defaultValue = \"\") String "
+							+ parameters + ",\r\n " + param;
+				}
+
+				// Create a newFolder
+				String daoPath = Test5.createNewFolders(mainFolderPath, filePath, "controller");
+				// for (String model : listOfModelClasses) { // for model name
+
+				// Create a file
+				File f = new File(daoPath + "/" + model + "Service.java");
+
+				PrintWriter printWriter = new PrintWriter(f);
+				printWriter.println("package " + Test5.classPath.split("\\.")[0] + ".controller;");
+				printWriter.println();
+				printWriter.println("import java.util.List;");
+				printWriter.println();
+
+				printWriter.println("import org.springframework.beans.factory.annotation.Autowired;");
+				printWriter.println("import org.springframework.web.bind.annotation.GetMapping;");
+				printWriter.println("import org.springframework.web.bind.annotation.DeleteMapping;");
+				printWriter.println("import org.springframework.web.bind.annotation.PostMapping;");
+				printWriter.println("import org.springframework.web.bind.annotation.RequestBody;");
+				printWriter.println("import org.springframework.web.bind.annotation.RequestHeader;");
+				printWriter.println("import org.springframework.web.bind.annotation.RequestMapping;");
+				printWriter.println("import org.springframework.web.bind.annotation.RestController;");
+
+				printWriter.println(responserModelListPath);
+				printWriter.println("import " + dtoFolderPkg + "DTO." + model + "DTO;");
+				printWriter.println("import " + dtoFolderPkg + "Service." + model + "Service;");
+
+				printWriter.println("@RestController\r\n" +
+
+						"@RequestMapping(" + "\"" + model + "\"" + ")\r\n" + "public class " + model
+						+ "Controller {\r\n" + "\r\n" + "	@Autowired\r\n" + "	private " + model
+						+ "Service service;\r\n" + "\r\n" + "	@PostMapping(\"/createOrUpdate\")\r\n"
+						+ "	public ResponseModelList<" + model + "DTO> createOrUpdate(@RequestBody " + model
+						+ "DTO dto) {\r\n" + "		ResponseModelList<" + model
+						+ "DTO> responseModel = service.createOrUpdate(dto);\r\n" + "		return responseModel;\r\n"
+						+ "	}\r\n" + "\r\n" + "	@GetMapping({ \"/all\", \"/single\" })\r\n"
+						+ "	public ResponseModelList<" + model
+						+ "DTO> get(@RequestHeader(value = \"id\", defaultValue = \"\") String id,\r\n"
+
+						+ param
+
+						+ "			@RequestHeader(value = \"search\", defaultValue = \"\") String search,\r\n"
+						+ "			@RequestHeader(value = \"currentPage\", defaultValue = \"0\") int currentPage,\r\n"
+						+ "			@RequestHeader(value = \"itemPerPage\", defaultValue = \"0\") int itemPerPage,\r\n"
+						+ "			@RequestHeader(value = \"sortBy\", defaultValue = \"\") String sortBy) \r\n"
+						+ "			@RequestHeader(value = \"sortOrder\", defaultValue = \"\") String sortOrder) {\r\n"
+						+ "			DatabaseHelper databaseHelper = new DatabaseHelper(search, currentPage, itemPerPage, sortBy, sortOrder);\r\n"
+						+ "			ResponseModelList<" + model + "DTO> responseModel = service.get(id, " + param2
+						+ "databaseHelper);\r\n" + "			return responseModel;\r\n" + "	}\r\n" + "\r\n"
+						+ "	@DeleteMapping\r\n" + "	public ResponseModelList<" + model
+						+ "DTO> deleteByIds(@RequestHeader(\"ids\") List<String> ids) {\r\n"
+						+ "		ResponseModelList<" + model + "DTO> responseModel = service.deleteByIds(ids);\r\n"
+						+ "		return responseModel;\r\n" + "	}\r\n" + "}");
+
+				printWriter.println();
+
+				printWriter.close();
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return true;
+	}
+
+	private static Boolean createService(Map<String, List<Field>> modelNameWithItsVariableNames) {
+		try {
+
+			for (Map.Entry<String, List<Field>> iterable_element : modelNameWithItsVariableNames.entrySet()) {
+
+				String model = iterable_element.getKey(); // For model name
+				List<Field> fieldList = iterable_element.getValue(); // For model fields List
+
+				String param = " ";
+				List<String> idFields = getParamFields(fieldList);
+				for (String parameters : idFields) {
+					param = " String " + parameters + ", " + param;
+				}
+
+				// Create a newFolder
+				String daoPath = Test5.createNewFolders(mainFolderPath, filePath, "Service");
+				// for (String model : listOfModelClasses) { // for model name
+
+				// Create a file
+				File f = new File(daoPath + "/" + model + "Service.java");
+
+				PrintWriter printWriter = new PrintWriter(f);
+				printWriter.println("package " + Test5.classPath.split("\\.")[0] + ".Service;");
+				printWriter.println();
+				printWriter.println("import java.util.List;");
+				printWriter.println();
+				printWriter.println(responserModelListPath);
+				printWriter.println("import " + classPath + model + ";");
+				printWriter.println("import " + dtoFolderPkg + "DTO." + model + "DTO;");
+
+				printWriter.println();
+
+				printWriter.println("public interface " + model + "Service {\r\n" + "\r\n" + "\tResponseModelList<"
+						+ model + "DTO> createOrUpdate(" + model + "DTO dto);\r\n" + "\r\n" + "\tResponseModelList<"
+						+ model + "DTO> get(String id," + param + "DatabaseHelper databaseHelper);\r\n" + "\r\n"
+						+ "\tResponseModelList<" + model + "DTO> deleteByIds(List<String> ids);\r\n" + "\r\n" + "}");
+
+				printWriter.close();
+
+			}
+
+//			ResponseModelList<AclRoleDTO> createOrUpdate(AclRoleDTO dto);
+//
+//			ResponseModelList<AclRoleDTO> get(String roleId, String userId, String roleTypeId, String groupId, String statusId,
+//					String sectionId, DatabaseHelper databaseHelper);
+//
+//			ResponseModelList<AclRoleDTO> deleteByIds(List<String> ids);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return false;
+	}
+
+	private static Boolean createServiceImpl(Map<String, List<Field>> modelNameWithItsVariableNames) {
+		try {
+
+			for (Map.Entry<String, List<Field>> iterable_element : modelNameWithItsVariableNames.entrySet()) {
+
+				String model = iterable_element.getKey(); // For model name
+				List<Field> fieldList = iterable_element.getValue(); // For model fields List
+
+				String param = " ";
+				List<String> idFields = getParamFields(fieldList);
+				for (String parameters : idFields) {
+					param = parameters + "," + param;
+				}
+
+				String param2 = " ";
+
+				for (String parameters : idFields) {
+					param2 = " String " + parameters + "," + param2;
+				}
+
+				// Create a newFolder
+				String daoPath = Test5.createNewFolders(mainFolderPath, filePath, "ServiceImpl");
+				// for (String model : listOfModelClasses) { // for model name
+
+				// Create a file
+				File f = new File(daoPath + "/" + model + "ServiceImpl.java");
+
+				PrintWriter printWriter = new PrintWriter(f);
+
+				// import start form here
+				printWriter.println("package " + Test5.classPath.split("\\.")[0] + ".ServiceImpl;");
+				printWriter.println();
+				printWriter.println("import java.util.List;");
+				printWriter.println("import java.util.ArrayList;");
+				printWriter.println("import org.apache.log4j.Logger;");
+				printWriter.println("import org.springframework.beans.factory.annotation.Autowired;");
+				printWriter.println("import org.springframework.stereotype.Service;");
+				printWriter.println("import org.springframework.transaction.annotation.Transactional;");
+				printWriter.println(responserModelListPath);
+				printWriter.println(constantExtensionPath);
+				printWriter.println(helperExtensionPath);
+				printWriter.println();
+				printWriter.println("import " + dtoFolderPkg + "Dao." + model + "Dao;");
+				printWriter.println("import " + dtoFolderPkg + "models." + model + ";");
+				printWriter.println("import " + dtoFolderPkg + "DTO." + model + "DTO;");
+				printWriter.println("import " + dtoFolderPkg + "Service." + model + "Service;");
+				printWriter.println("import " + dtoFolderPkg + "ModelAndDTOSetterExtension.ModelSetterExtension;");
+				printWriter.println("import " + dtoFolderPkg + "ModelAndDTOSetterExtension.DTOSetterExtension;");
+				printWriter.println();
+				// import end form here
+
+				// methods start from here
+
+				/*
+				 * createOrUpdate() method start from here
+				 */
+				printWriter.println("@Service\r\n" + "@Transactional(readOnly = true)\r\n" + "public class " + model
+						+ "ServiceImpl implements " + model + "Service {\r\n" + "\r\n" + "	@Autowired\r\n"
+						+ "	private " + model + "Dao dao;\r\n" + "\r\n"
+						+ "	final static Logger logger = Logger.getLogger(" + model + "ServiceImpl.class);\r\n"
+						+ "	ResponseModelList<" + model + "DTO> responseModel = new ResponseModelList<>();\r\n"
+						+ "	HelperExtension helperExtension = new HelperExtension();\r\n" + "\r\n"
+						+ "	private boolean status = false;\r\n" + "	private String message = \"\";\r\n"
+						+ "	private List<" + model + "DTO> list = null;\r\n" + "\r\n" + "\r\n" + "	@Override\r\n"
+						+ "	@Transactional(readOnly = false)\r\n" + "	public ResponseModelList<" + model
+						+ "DTO> createOrUpdate(" + model + "DTO dto) {\r\n" + "		list = new ArrayList<>();\r\n"
+						+ "		try {\r\n" + "			List<" + model + "> models = dao.exists(dto);\r\n"
+						+ "			if (models.size() > 0) {\r\n"
+						+ "				putValueInResponseModel(false, ConstantExtension.SAME_NAME_IN_CLASS, null, null);\r\n"
+						+ "			} else {\r\n"
+						+ "				if (!helperExtension.isNullOrEmpty(dto.getId())) {\r\n"
+						+ "					putValueInResponseModel(true, ConstantExtension.CLASS_UPDATED, dto, null);\r\n"
+						+ "\r\n" + "				} else {\r\n"
+						+ "					putValueInResponseModel(true, ConstantExtension.CLASS_ADDED, dto, null);\r\n"
+						+ "				}\r\n" + "			}\r\n" + "			responseModel = new ResponseModelList<"
+						+ model + "DTO>(status, message, list);\r\n" + "		} catch (Exception e) {\r\n"
+						+ "			e.printStackTrace();\r\n" + "			responseModel = new ResponseModelList<"
+						+ model + "DTO>(status, message, list);\r\n" + "		}\r\n"
+						+ "		return responseModel;\r\n" + "	}\r\n" + "\r\n"
+						+ "	// This method is used to put the value in Global Variables(status, message,\r\n"
+						+ "	// list\r\n" + "	// of particular dto)\r\n"
+						+ "	public void putValueInResponseModel(boolean status, String message, " + model + "DTO dto, "
+						+ model + " classesModel) {\r\n" + "		this.status = status;\r\n"
+						+ "		this.message = message;\r\n" + "		List<" + model
+						+ "DTO> dtos = new ArrayList<>();\r\n" + "		if (!helperExtension.isNullOrEmpty(dto)) {\r\n"
+						+ "			" + model + " model = new ModelSetterExtension().get" + model
+						+ "(dto, classesModel);\r\n" + "			dao.saveOrUpdate(model);\r\n"
+						+ "			dto.setId(model.getId());\r\n" + "			dtos.add(dto);\r\n"
+						+ "			this.list = dtos;\r\n" + "		}\r\n" + "	}\r\n" + "\r\n" + "	@Override\r\n"
+						+ "	public ResponseModelList<" + model + "DTO> get(String id," + param2
+						+ "DatabaseHelper databaseHelper) {\r\n" + "		list = new ArrayList<>();\r\n"
+						+ "		int numberOfPages = 0;\r\n" + "		try {\r\n" + "			List<" + model
+						+ "> daoList = dao.get(id, " + param + "databaseHelper);\r\n"
+						+ "			Integer count[] = null;\r\n"
+						+ "			if (databaseHelper.getCurrentPage() != 0 && databaseHelper.getItemPerPage() != 0) {\r\n"
+						+ "				DatabaseHelper tempDatabasehelper = new DatabaseHelper(databaseHelper);\r\n"
+						+ "				int items = dao.get(id, " + param + "tempDatabasehelper).size();\r\n"
+						+ "				count = new HelperExtension().pagination(databaseHelper, items);\r\n"
+						+ "			}\r\n" + "			for (" + model + " model : daoList) {\r\n" + "				"
+						+ model + "DTO dto = new DTOSetterExtension().get" + model + "DTO(model);\r\n"
+						+ "				list.add(dto);\r\n" + "			}\r\n"
+						+ "			responseModel = new ResponseModelList<" + model
+						+ "DTO>(true, ConstantExtension.SUCCESS_RECEIVE, list, count,\r\n"
+						+ "					numberOfPages);\r\n" + "		} catch (Exception e) {\r\n"
+						+ "			e.printStackTrace();\r\n" + "			responseModel = new ResponseModelList<"
+						+ model + "DTO>(status, message, list);\r\n" + "		}\r\n"
+						+ "		return responseModel;\r\n" + "	}\r\n" + "\r\n" + "	@Override\r\n"
+						+ "	@Transactional(readOnly = false)\r\n" + "	public ResponseModelList<" + model
+						+ "DTO> deleteByIds(List<String> ids) {\r\n" + "		list = new ArrayList<>();\r\n"
+						+ "		try {\r\n" + "			for (String id : ids) {\r\n" + "				" + model
+						+ " model = dao.findById(id);\r\n" + "				model.setIsFlag(0);\r\n"
+						+ "				dao.saveOrUpdate(model);\r\n"
+						+ "				list.add(new DTOSetterExtension().get" + model + "DTO(model));\r\n"
+						+ "			}\r\n" + "			responseModel = new ResponseModelList<" + model
+						+ "DTO>(true, ConstantExtension.SUCCESS_MESSAGE_DELETED, list);\r\n"
+						+ "		} catch (Exception exception) {\r\n" + "			exception.printStackTrace();\r\n"
+						+ "			responseModel = new ResponseModelList<" + model
+						+ "DTO>(false, ConstantExtension.MESSAGE_ERROR, list);\r\n" + "		}\r\n"
+						+ "		return responseModel;\r\n" + "	}\r\n" + "	\r\n" + "}");
+				/*
+				 * createOrUpdate() method end from here
+				 */
+
+				// methods end from here
+
+//				printWriter.println("}");
+				printWriter.close();
+
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return false;
 	}
 
 	private static Boolean createDAO(List<String> listOfModelClasses,
@@ -86,9 +371,11 @@ public class Test5 {
 					param = "String " + parameters + ", " + param;
 				}
 
+				// Create a newFolder
 				String daoPath = Test5.createNewFolders(mainFolderPath, filePath, "Dao");
 				// for (String model : listOfModelClasses) { // for model name
 
+				// Create a file
 				File f = new File(daoPath + "/" + model + "Dao.java");
 
 				PrintWriter printWriter = new PrintWriter(f);
@@ -147,14 +434,14 @@ public class Test5 {
 			String ModelAndDTOSetterExtensionPath = Test5.createNewFolders(mainFolderPath, filePath,
 					"ModelAndDTOSetterExtension");
 
-			File f = new File(ModelAndDTOSetterExtensionPath + "/DtoSetterExtension.java");
+			File f = new File(ModelAndDTOSetterExtensionPath + "/DTOSetterExtension.java");
 
 			PrintWriter printWriter = new PrintWriter(f);
 			printWriter.println("package " + Test5.classPath.split("\\.")[0] + ".ModelAndDTOSetterExtension;");
 			printWriter.println();
 			createModelSetterExtensionImports(listOfModelClasses, printWriter);
 			printWriter.println();
-			printWriter.println("class DTOSetterExtension {");
+			printWriter.println("public class DTOSetterExtension {");
 			printWriter.println();
 			printWriter.println("\tHelperExtension helperExtension = new HelperExtension();");
 			printWriter.println();
@@ -258,7 +545,7 @@ public class Test5 {
 			printWriter.println();
 			createModelSetterExtensionImports(listOfModelClasses, printWriter);
 			printWriter.println();
-			printWriter.println("class ModelSetterExtension {");
+			printWriter.println("public class ModelSetterExtension {");
 			printWriter.println();
 
 			printWriter.println("\tHelperExtension helperExtension = new HelperExtension();");
@@ -402,35 +689,6 @@ public class Test5 {
 
 		}
 
-//		public AddressDetails getAddressDetails(AddressDetailsDTO dto, AddressDetails addressDetailsModel) {
-//		AddressDetails model = null;
-//		if (!helperExtension.isNullOrEmpty(dto)) {
-//			if (helperExtension.isNullOrEmpty(addressDetailsModel)) {
-//				model = new AddressDetails();
-//			} else {
-//				model = addressDetailsModel;
-//			}
-//			if (!helperExtension.isNullOrEmpty(dto.getAddressId())) {
-//				model.setAddressId(dto.getAddressId());
-//			} else {
-//				model.setAddressId("ADD_ID_" + helperExtension.getUniqueId());
-//			}
-//			model.setAddLine1(dto.getAddLine1());
-//			model.setAddLine2(dto.getAddLine2());
-//			model.setCity(dto.getCity());
-//			model.setState(dto.getState());
-//			model.setPincode(dto.getPincode());
-//			if (helperExtension.isNullOrEmpty(dto.getAddressId())) {
-//				model.setCreatedOn(helperExtension.timestampToDate(dto.getCreatedOn()));
-//			} else {
-//				model.setCreatedOn(helperExtension.timestampToDate(dto.getCreatedOn()));
-//				model.setUpdatedOn(helperExtension.getDateTime());
-//			}
-//			model.setIsFlag(1);
-//		}
-//		return model;
-//	}
-
 	}
 
 	public static boolean createDTOs(String filePath, String dtoFileName, List<Field> privateFieldName,
@@ -447,6 +705,15 @@ public class Test5 {
 		list.add("double");
 		list.add("float");
 		list.add("boolean");
+
+		dtoFolderPkg = "";
+		// Start : setting the package name of dto before the file name and set that
+		// name into the "dtoFolderPkg" variable
+		String asdf[] = Test5.classPath.split("\\.");
+		for (int i = 0; i < asdf.length - 1; i++)
+			dtoFolderPkg = dtoFolderPkg + asdf[i] + ".";
+		// End : setting the package name of dto before the file name and set that name
+		// into the "dtoFolderPkg" variable
 
 		try {
 			List<String> asd = new ArrayList<>();
