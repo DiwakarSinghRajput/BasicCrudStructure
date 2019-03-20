@@ -14,6 +14,7 @@ public class Test5 {
 	static String mainFolderPath = "/home/ued/Documents/workspace-BasicCrudStructure/BasicCrudStructure";
 	static String classPath = "demo.models.";
 	static String filePath = "src/demo/models";
+	static String helperExtension = "HelperExtension helperExtension = new HelperExtension();";
 
 	static List<String> listOfModelClasses = new ArrayList<>();
 
@@ -67,12 +68,103 @@ public class Test5 {
 
 		Boolean flag1 = Test5.createModelSetterExtension(modelNameWithItsVariableNames);
 		Boolean flag2 = Test5.createDTOSetterExtension(modelNameWithItsVariableNames);
-		Boolean flag3 = Test5.createDAO(listOfModelClasses, modelNameWithItsVariableNames);
-
+		Boolean flag3 = Test5.createDAO(modelNameWithItsVariableNames);
+		Boolean falg4 = Test5.createDaoImpl(modelNameWithItsVariableNames);
 	}
 
-	private static Boolean createDAO(List<String> listOfModelClasses,
-			Map<String, List<Field>> modelNameWithItsVariableNames) {
+	private static Boolean createDaoImpl(Map<String, List<Field>> modelNameWithItsVariableNames) {
+		try {
+
+			for (Map.Entry<String, List<Field>> iterable_element : modelNameWithItsVariableNames.entrySet()) {
+
+				String model = iterable_element.getKey(); // For model name
+				List<Field> fieldList = iterable_element.getValue(); // For model fields List
+				String param = " ";
+				List<String> idFields = getParamFields(fieldList);
+				for (String parameters : idFields) {
+					param = "String " + parameters + ", " + param;
+				}
+
+				String daoPath = Test5.createNewFolders(mainFolderPath, filePath, "DaoImpl");
+				// for (String model : listOfModelClasses) { // for model name
+
+				File f = new File(daoPath + "/" + model + "DaoImpl.java");
+
+				PrintWriter printWriter = new PrintWriter(f);
+				printWriter.println("package " + Test5.classPath.split("\\.")[0] + ".DaoImpl;");
+				printWriter.println();
+				daoImplImports(printWriter);
+				printWriter.println("import demo.test.DatabaseHelper;");
+				printWriter.println("import demo.models." + model + ";");
+				printWriter.println("import demo.test.BaseDaoImpl;");
+				printWriter.println("import demo.Dao." + model + "Dao;");
+				printWriter.println("\n@Repository");
+				printWriter.println("public class " + model + "DaoImpl extends BaseDaoImpl<" + model + "> implements "
+						+ model + "Dao {\n\n\t@PersistenceContext\n\t private EntityManager entityManager;\n\n\t"
+						+ helperExtension + "\n\n\t @Override\n\t public List<" + model + "> get(String id, " + param
+						+ "DatabaseHelper databaseHelper) { \n\t CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();\n\t CriteriaQuery<"
+						+ model + "> criteriaQuery = criteriaBuilder.createQuery(" + model + ".class);\n\t Root<"
+						+ model + "> root = criteriaQuery.from(" + model
+						+ ".class);\n\t List<Predicate> predicateList = new ArrayList<Predicate>();\n\t if (!helperExtension.isNullOrEmpty(id)) {\r\n"
+						+ "			predicateList.add(criteriaBuilder.equal(root.get(\"id\"), id));\r\n" + "		}");
+
+				Map<String, String> hash_map = getParamKeyOrValue(fieldList);
+				if (hash_map.size() > 0) {
+					for (Map.Entry<String, String> ie : hash_map.entrySet()) {
+						String key = ie.getKey();
+						String value = ie.getValue();
+						printWriter.println("\t if (!helperExtension.isNullOrEmpty(" + value + ")) {\r\n"
+								+ "			predicateList.add(criteriaBuilder.equal(root.get(\"" + key + "\").get(\""
+								+ value + "\")," + value + "));\r\n" + "		}");
+					}
+				}
+
+				printWriter.println(
+						"\t predicateList.add(criteriaBuilder.equal(root.get(\"isFlag\"), 1));\n\t if (!helperExtension.isNullOrEmpty(databaseHelper)) {\n\t\t// Search Starts\n\t\tif (!helperExtension.isNullOrEmpty(databaseHelper.getSearch())) {\n\t\t\tpredicateList.add(criteriaBuilder.like(root.get(\"\"), databaseHelper.getSearch() + \"%\"));\n\t\t}\n\t\t// Sorting Starts\r\n"
+								+ "		if (databaseHelper.getSortOrder().equalsIgnoreCase(eOrderBy.enAsc.getKey())) {\r\n"
+								+ "			criteriaQuery.orderBy(criteriaBuilder.asc(root.get(databaseHelper.getSortBy())));\r\n"
+								+ "		} else {\r\n"
+								+ "			criteriaQuery.orderBy(criteriaBuilder.desc(root.get(databaseHelper.getSortBy())));\r\n"
+								+ "		}\r\n"
+								+ "		criteriaQuery.where(criteriaBuilder.and(predicateList.toArray(new Predicate[predicateList.size()])));\r\n"
+								+ "		// Pagination Starts\r\n"
+								+ "		if (databaseHelper.getCurrentPage() != 0 && databaseHelper.getItemPerPage() != 0) {\r\n"
+								+ "			final TypedQuery<" + model
+								+ "> typedQuery = entityManager.createQuery(criteriaQuery);\r\n"
+								+ "			typedQuery.setFirstResult((databaseHelper.getCurrentPage() - 1) * databaseHelper.getItemPerPage());\r\n"
+								+ "			typedQuery.setMaxResults(databaseHelper.getItemPerPage());\r\n"
+								+ "			return typedQuery.getResultList();\r\n" + "		}\r\n" + "	} else {\r\n"
+								+ "			criteriaQuery.where(criteriaBuilder.and(predicateList.toArray(new Predicate[predicateList.size()])));\r\n"
+								+ "		}\r\n"
+								+ "		return entityManager.createQuery(criteriaQuery).getResultList();\r\n" + "	}");
+
+				printWriter.println("\t@Override\r\n" + "	public List<" + model + "> exist(" + model
+						+ "DTO dto) {\r\n"
+						+ "		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();\r\n"
+						+ "		CriteriaQuery<" + model + "> criteriaQuery = criteriaBuilder.createQuery(" + model
+						+ ".class);\r\n" + "		Root<" + model + "> root = criteriaQuery.from(" + model
+						+ ".class);\r\n" + "		List<Predicate> predicateList = new ArrayList<Predicate>();\r\n"
+						+ "		if (!helperExtension.isNullOrEmpty(dto.getId())) {\r\n"
+						+ "			predicateList.add(criteriaBuilder.notEqual(root.get(\"id\"), dto.getId()));\r\n"
+						+ "		}\r\n" + "		predicateList.add(criteriaBuilder.equal(root.get(\"isFlag\"), 1));\r\n"
+						+ "		criteriaQuery.where(criteriaBuilder.and(predicateList.toArray(new Predicate[predicateList.size()])));\r\n"
+						+ "		return entityManager.createQuery(criteriaQuery).getResultList();\r\n" + "	}\r\n"
+						+ "\r\n" + "}\r\n" + "");
+
+				printWriter.close();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+
+	private static void daoImplImports(PrintWriter printWriter) {
+		printWriter.println(
+				"import java.util.List;\nimport java.util.ArrayList;\nimport javax.persistence.EntityManager;\nimport javax.persistence.PersistenceContext;\nimport javax.persistence.TypedQuery;\nimport javax.persistence.criteria.CriteriaBuilder;\nimport javax.persistence.criteria.CriteriaQuery;\nimport javax.persistence.criteria.Predicate;\nimport javax.persistence.criteria.Root;\nimport org.springframework.stereotype.Repository;");
+	}
+
+	private static Boolean createDAO(Map<String, List<Field>> modelNameWithItsVariableNames) {
 
 		try {
 
@@ -142,6 +234,29 @@ public class Test5 {
 
 	}
 
+	private static Map<String, String> getParamKeyOrValue(List<Field> fieldList) {
+		Map<String, String> hash_map = new HashMap<>();
+		List<String> list = new ArrayList<>();
+		list.add("java.lang.String");
+		list.add("java.lang.Integer");
+		list.add("java.lang.Long");
+		list.add("java.lang.Double");
+		list.add("java.lang.Float");
+		list.add("java.lang.Boolean");
+		list.add("java.util.Date");
+		list.add("long");
+
+		for (Field field : fieldList) {
+
+			if (!list.contains(field.getType().getName())) {
+				hash_map.put(field.getType().getName(), field.getName().substring(0, 4) + "Id");
+			}
+
+		}
+
+		return hash_map;
+	}
+
 	private static Boolean createDTOSetterExtension(Map<String, List<Field>> modelNameWithItsVariableNames) {
 		try {
 			String ModelAndDTOSetterExtensionPath = Test5.createNewFolders(mainFolderPath, filePath,
@@ -156,7 +271,7 @@ public class Test5 {
 			printWriter.println();
 			printWriter.println("class DTOSetterExtension {");
 			printWriter.println();
-			printWriter.println("\tHelperExtension helperExtension = new HelperExtension();");
+			printWriter.println("\t" + helperExtension);
 			printWriter.println();
 			createDtoSetterExtensionMethods(modelNameWithItsVariableNames, printWriter);
 
@@ -215,7 +330,7 @@ public class Test5 {
 						printWriter.println("\t\t\tif (!helperExtension.isNullOrEmpty(model.get" + id + "()))");
 						printWriter.println("\t\t\t\tdto.set" + id + "(model.get" + id + "());");
 
-					} else if (field.getType().getName().equalsIgnoreCase("java.util.Date")
+					} else if (field.getType().getName().equalsIgnoreCase("long")
 							&& listName.contains(field.getName())) {
 						System.out.println("==$$$" + field.getName());
 
@@ -261,7 +376,7 @@ public class Test5 {
 			printWriter.println("class ModelSetterExtension {");
 			printWriter.println();
 
-			printWriter.println("\tHelperExtension helperExtension = new HelperExtension();");
+			printWriter.println("\t" + helperExtension);
 			printWriter.println();
 
 			createModelSetterExtensionMethods(modelNameWithItsVariableNames, printWriter);
